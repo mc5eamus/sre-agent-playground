@@ -59,34 +59,12 @@ module identity 'modules/identity.bicep' = {
 }
 
 // --- Role Assignments ---
-
-// Azure Event Hubs Data Sender role for the managed identity
-resource eventHubsDataSenderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, identity.outputs.identityPrincipalId, 'EventHubsDataSender')
-  properties: {
+module roleAssignments 'modules/roleassignments.bicep' = {
+  name: 'roleAssignments'
+  params: {
     principalId: identity.outputs.identityPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2b629674-e913-4c01-ae53-ef4638d8f975')
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Azure Event Hubs Data Receiver role for the managed identity
-resource eventHubsDataReceiverRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, identity.outputs.identityPrincipalId, 'EventHubsDataReceiver')
-  properties: {
-    principalId: identity.outputs.identityPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Web PubSub Service Owner role for the managed identity
-resource webPubSubServiceOwnerRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, identity.outputs.identityPrincipalId, 'WebPubSubServiceOwner')
-  properties: {
-    principalId: identity.outputs.identityPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '12cf5a90-567b-43ae-8102-96cf46c7d9b4')
-    principalType: 'ServicePrincipal'
+    eventHubNamespaceId: eventhub.outputs.namespaceId
+    webPubSubId: webpubsub.outputs.webPubSubId
   }
 }
 
