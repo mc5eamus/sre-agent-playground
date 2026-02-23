@@ -7,6 +7,12 @@ param eventHubNamespaceId string
 @description('Web PubSub resource ID')
 param webPubSubId string
 
+@description('ACR resource ID')
+param acrId string
+
+@description('AKS kubelet identity principal ID for ACR pull')
+param aksKubeletPrincipalId string
+
 // Azure Event Hubs Data Sender
 resource eventHubsDataSenderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(eventHubNamespaceId, principalId, 'EventHubsDataSender')
@@ -33,6 +39,16 @@ resource webPubSubServiceOwnerRole 'Microsoft.Authorization/roleAssignments@2022
   properties: {
     principalId: principalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '12cf5a90-567b-43ae-8102-96cf46c7d9b4')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// AcrPull for AKS kubelet identity
+resource acrPullRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acrId, aksKubeletPrincipalId, 'AcrPull')
+  properties: {
+    principalId: aksKubeletPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
     principalType: 'ServicePrincipal'
   }
 }

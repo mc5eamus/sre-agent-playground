@@ -28,18 +28,22 @@ All resources are deployed via a single Bicep template:
 | **Application Insights** | Telemetry collection from AKS workloads |
 | **Log Analytics Workspace** | Centralized logging for AKS and applications |
 | **Web PubSub** | Real-time WebSocket communication to frontend |
+| **Container Registry (ACR)** | Private registry for container images |
 | **Managed Identity** | Workload identity for secure Azure service access |
 
 ## Project Structure
 
 ```
+├── azure.yaml                # Azure Developer CLI project definition
 ├── infra/                    # Bicep infrastructure templates
 │   ├── main.bicep            # Main orchestration template
 │   └── modules/
+│       ├── acr.bicep          # Azure Container Registry
 │       ├── aks.bicep          # AKS cluster
 │       ├── eventhub.bicep     # Event Hub namespace and hub
 │       ├── identity.bicep     # Managed identity + federated credentials
 │       ├── monitoring.bicep   # Log Analytics + Application Insights
+│       ├── roleassignments.bicep # RBAC role assignments
 │       └── webpubsub.bicep    # Web PubSub service
 ├── src/
 │   ├── api/                   # REST API (Express/Node.js)
@@ -55,15 +59,39 @@ All resources are deployed via a single Bicep template:
 ## Prerequisites
 
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+- [Azure Developer CLI (`azd`)](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd) — recommended for one-command deployment
 - [Bicep CLI](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) (or use via Azure CLI)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [Docker](https://docs.docker.com/get-docker/)
 - An Azure subscription with permissions to create resources
-- An Azure Container Registry (ACR) for container images
 
 ## Setup
 
-### 1. Deploy Infrastructure
+### Option A: Deploy with `azd` (Recommended)
+
+The project is configured for [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/overview).
+
+```bash
+# Login to Azure
+azd auth login
+
+# Initialize environment (choose a name and region)
+azd init
+
+# Provision all infrastructure
+azd provision
+```
+
+After provisioning, capture the outputs:
+
+```bash
+# The outputs are displayed after provisioning; you can also query them:
+azd env get-values
+```
+
+### Option B: Deploy with Azure CLI
+
+### Option B: Deploy with Azure CLI
 
 ```bash
 # Login to Azure
@@ -83,14 +111,12 @@ AKS_NAME=$(az deployment group show -g rg-chaos-demo -n main --query properties.
 EH_NAMESPACE=$(az deployment group show -g rg-chaos-demo -n main --query properties.outputs.eventHubNamespace.value -o tsv)
 WPS_HOST=$(az deployment group show -g rg-chaos-demo -n main --query properties.outputs.webPubSubHostName.value -o tsv)
 IDENTITY_CLIENT_ID=$(az deployment group show -g rg-chaos-demo -n main --query properties.outputs.workloadIdentityClientId.value -o tsv)
+ACR_NAME=$(az deployment group show -g rg-chaos-demo -n main --query properties.outputs.acrName.value -o tsv)
 ```
 
 ### 2. Build and Push Container Images
 
 ```bash
-# Set your ACR name
-ACR_NAME=<your-acr-name>
-
 # Login to ACR
 az acr login --name $ACR_NAME
 

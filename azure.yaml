@@ -1,0 +1,7 @@
+name: aks-chaos-demo
+metadata:
+  template: aks-chaos-demo@0.0.1
+infra:
+  provider: bicep
+  path: ./infra
+  module: main

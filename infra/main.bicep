@@ -47,6 +47,15 @@ module webpubsub 'modules/webpubsub.bicep' = {
   }
 }
 
+// --- Container Registry ---
+module acr 'modules/acr.bicep' = {
+  name: 'acr'
+  params: {
+    acrName: replace('${baseName}acr', '-', '')
+    location: location
+  }
+}
+
 // --- Workload Identity ---
 module identity 'modules/identity.bicep' = {
   name: 'identity'
@@ -65,6 +74,8 @@ module roleAssignments 'modules/roleassignments.bicep' = {
     principalId: identity.outputs.identityPrincipalId
     eventHubNamespaceId: eventhub.outputs.namespaceId
     webPubSubId: webpubsub.outputs.webPubSubId
+    acrId: acr.outputs.acrId
+    aksKubeletPrincipalId: aks.outputs.kubeletIdentityObjectId
   }
 }
 
@@ -77,3 +88,5 @@ output webPubSubHostName string = webpubsub.outputs.hostName
 output appInsightsConnectionString string = monitoring.outputs.appInsightsConnectionString
 output workloadIdentityClientId string = identity.outputs.identityClientId
 output logAnalyticsWorkspaceName string = monitoring.outputs.logAnalyticsWorkspaceName
+output acrLoginServer string = acr.outputs.acrLoginServer
+output acrName string = acr.outputs.acrName
