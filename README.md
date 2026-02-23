@@ -47,9 +47,12 @@ All resources are deployed via a single Bicep template:
 │       └── webpubsub.bicep    # Web PubSub service
 ├── src/
 │   ├── api/                   # REST API (Express/Node.js)
+│   │   └── manifests/         # K8s manifests for azd deploy
 │   ├── frontend/              # Frontend (React/Vite)
+│   │   └── manifests/         # K8s manifests for azd deploy
 │   └── listener/              # Event Hub listener (Node.js)
-├── k8s/                       # Kubernetes manifests
+│       └── manifests/         # K8s manifests for azd deploy
+├── k8s/                       # Kubernetes manifests (manual/envsubst)
 │   ├── api.yaml               # API deployment + service + service account
 │   ├── frontend.yaml          # Frontend deployment + LoadBalancer service
 │   └── listener.yaml          # Listener deployment + service account
@@ -75,17 +78,26 @@ The project is configured for [Azure Developer CLI](https://learn.microsoft.com/
 # Login to Azure
 azd auth login
 
-# Initialize environment (choose a name and region)
-azd init
-
-# Provision all infrastructure
-azd provision
+# Provision infrastructure and deploy all services in one step
+azd up
 ```
 
-After provisioning, capture the outputs:
+This will:
+1. Provision all Azure resources (AKS, Event Hub, ACR, Web PubSub, etc.)
+2. Build Docker images for all three services
+3. Push images to the provisioned ACR
+4. Deploy K8s manifests to AKS
+
+You can also run each step separately:
 
 ```bash
-# The outputs are displayed after provisioning; you can also query them:
+azd provision   # Provision infrastructure only
+azd deploy      # Build, push, and deploy services only
+```
+
+To view the environment values (Bicep outputs):
+
+```bash
 azd env get-values
 ```
 
