@@ -34,7 +34,7 @@ spec:
             - name: EVENT_HUB_NAMESPACE
               value: "{{ .Env.eventHubNamespace }}"
             - name: EVENT_HUB_NAME
-              value: "messages"
+              value: "{{ .Env.eventHubName }}"
             - name: CONSUMER_GROUP
               value: "listener"
             - name: WEB_PUBSUB_ENDPOINT
