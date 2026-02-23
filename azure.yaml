@@ -5,3 +5,16 @@ infra:
   provider: bicep
   path: ./infra
   module: main
+services:
+  api:
+    host: aks
+    project: ./src/api
+    language: js
+  frontend:
+    host: aks
+    project: ./src/frontend
+    language: js
+  listener:
+    host: aks
+    project: ./src/listener
+    language: js

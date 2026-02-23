@@ -80,6 +80,8 @@ module roleAssignments 'modules/roleassignments.bicep' = {
 }
 
 // --- Outputs ---
+output AZURE_AKS_CLUSTER_NAME string = aks.outputs.clusterName
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = acr.outputs.acrLoginServer
 output aksClusterName string = aks.outputs.clusterName
 output aksClusterFqdn string = aks.outputs.clusterFqdn
 output eventHubNamespace string = eventhub.outputs.fullyQualifiedNamespace
