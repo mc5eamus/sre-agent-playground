@@ -8,7 +8,7 @@ param location string = resourceGroup().location
 param aksOidcIssuerUrl string
 
 @description('Kubernetes namespace for the workload')
-param k8sNamespace string = 'default'
+param k8sNamespace string = 'aks-chaos-demo'
 
 @description('Kubernetes service account name for the API')
 param apiServiceAccountName string = 'api-sa'
@@ -36,6 +36,7 @@ resource apiFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentitie
 resource listenerFederatedCredential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-01-31' = {
   parent: managedIdentity
   name: 'listener-federated-credential'
+  dependsOn: [apiFederatedCredential]
   properties: {
     issuer: aksOidcIssuerUrl
     subject: 'system:serviceaccount:${k8sNamespace}:${listenerServiceAccountName}'

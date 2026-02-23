@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: default
   labels:
     app: frontend
 spec:
@@ -17,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ${ACR_NAME}.azurecr.io/chaos-demo-frontend:latest
+          image: {{.Env.SERVICE_FRONTEND_IMAGE_NAME}}
           ports:
             - containerPort: 80
           resources:
@@ -27,16 +26,3 @@ spec:
             limits:
               cpu: 100m
               memory: 128Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend-service
-  namespace: default
-spec:
-  selector:
-    app: frontend
-  ports:
-    - port: 80
-      targetPort: 80
-  type: LoadBalancer

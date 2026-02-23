@@ -41,6 +41,7 @@ export default function App() {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            console.log("Received WebSocket message:", data);
             // Web PubSub wraps messages in a data envelope
             const payload = data.data ? JSON.parse(data.data) : data;
             setEvents((prev) => [

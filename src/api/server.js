@@ -4,6 +4,7 @@ const { EventHubProducerClient } = require("@azure/event-hubs");
 const { DefaultAzureCredential } = require("@azure/identity");
 const { WebPubSubServiceClient } = require("@azure/web-pubsub");
 const { v4: uuidv4 } = require("uuid");
+const { messagesSentCounter, messagesSentDuration, negotiateCounter } = require("./instrumentation");
 
 const app = express();
 app.use(cors());
@@ -42,6 +43,7 @@ app.post("/api/messages", async (req, res) => {
       return res.status(400).json({ error: "message and count (>= 1) are required" });
     }
 
+    const startTime = Date.now();
     const batch = await producerClient.createBatch();
     const messageIds = [];
 
@@ -70,6 +72,10 @@ app.post("/api/messages", async (req, res) => {
 
     await producerClient.sendBatch(batch);
 
+    const durationMs = Date.now() - startTime;
+    messagesSentCounter.add(count, { hub: EVENT_HUB_NAME });
+    messagesSentDuration.record(durationMs, { hub: EVENT_HUB_NAME, batchSize: count });
+
     res.json({
       success: true,
       messageCount: count,
@@ -87,6 +93,7 @@ app.get("/api/negotiate", async (_req, res) => {
     const token = await pubsubClient.getClientAccessToken({
       roles: ["webpubsub.joinLeaveGroup.demo", "webpubsub.sendToGroup.demo"],
     });
+    negotiateCounter.add(1);
     res.json({ url: token.url });
   } catch (error) {
     console.error("Error negotiating PubSub:", error);

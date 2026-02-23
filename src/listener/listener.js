@@ -1,6 +1,8 @@
 const { EventHubConsumerClient } = require("@azure/event-hubs");
 const { DefaultAzureCredential } = require("@azure/identity");
 const { WebPubSubServiceClient } = require("@azure/web-pubsub");
+const { messagesProcessedCounter, processingDuration, consumerLag } = require("./instrumentation");
+const { trace } = require("@opentelemetry/api");
 
 const EVENT_HUB_NAMESPACE = process.env.EVENT_HUB_NAMESPACE;
 const EVENT_HUB_NAME = process.env.EVENT_HUB_NAME || "messages";
@@ -28,25 +30,54 @@ function randomDelay(minMs = 100, maxMs = 500) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
+const tracer = trace.getTracer("listener");
+
 async function processEvent(event) {
   const body = event.body;
   console.log(`Processing message: ${body.id} (${body.index}/${body.total})`);
 
-  // Random delay between 100ms and 500ms
-  await randomDelay(100, 500);
+  // Track consumer lag (time between enqueue and processing)
+  if (event.enqueuedTimeUtc) {
+    const lagMs = Date.now() - event.enqueuedTimeUtc.getTime();
+    consumerLag.record(lagMs, { partitionId: event.partitionKey || "unknown" });
+  }
 
-  const response = {
-    type: "processed",
-    originalId: body.id,
-    message: body.message,
-    index: body.index,
-    total: body.total,
-    processedAt: new Date().toISOString(),
-    processingNode: process.env.HOSTNAME || "unknown",
-  };
+  const processStart = Date.now();
 
-  await pubsubClient.sendToAll(JSON.stringify(response));
-  console.log(`Sent response for message: ${body.id}`);
+  // Wrap processing in a manual span for tracing
+  await tracer.startActiveSpan("process-message", { attributes: {
+    "messaging.message_id": body.id,
+    "messaging.batch_index": body.index,
+    "messaging.batch_total": body.total,
+  }}, async (span) => {
+    try {
+      // Random delay between 100ms and 500ms
+      await randomDelay(100, 500);
+
+      const response = {
+        type: "processed",
+        originalId: body.id,
+        message: body.message,
+        index: body.index,
+        total: body.total,
+        processedAt: new Date().toISOString(),
+        processingNode: process.env.HOSTNAME || "unknown",
+      };
+
+      await pubsubClient.sendToAll(response);
+
+      span.setStatus({ code: 1 }); // OK
+    } catch (err) {
+      span.setStatus({ code: 2, message: err.message }); // ERROR
+      throw err;
+    } finally {
+      span.end();
+    }
+  });
+
+  const processDurationMs = Date.now() - processStart;
+  messagesProcessedCounter.add(1, { hub: EVENT_HUB_NAME });
+  processingDuration.record(processDurationMs, { hub: EVENT_HUB_NAME });
 }
 
 const subscription = consumerClient.subscribe({

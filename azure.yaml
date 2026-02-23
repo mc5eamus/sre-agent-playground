@@ -1,7 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
 name: aks-chaos-demo
 metadata:
   template: aks-chaos-demo@0.0.1
-infra:
-  provider: bicep
-  path: ./infra
-  module: main
+workflows:
+  up:
+    steps:
+      - azd: provision
+      - azd: deploy --all
+services:
+  api:
+    project: ./src/api
+    language: js
+    host: aks
+  frontend:
+    project: ./src/frontend
+    language: js
+    host: aks
+  listener:
+    project: ./src/listener
+    language: js
+    host: aks

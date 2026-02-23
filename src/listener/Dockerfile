@@ -3,4 +3,4 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
-CMD ["node", "listener.js"]
+CMD ["node", "--require", "./instrumentation.js", "listener.js"]
