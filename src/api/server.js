@@ -60,7 +60,9 @@ app.post("/api/messages", async (req, res) => {
         // If batch is full, send it and create a new one
         await producerClient.sendBatch(batch);
         const newBatch = await producerClient.createBatch();
-        newBatch.tryAdd({ body: payload });
+        if (!newBatch.tryAdd({ body: payload })) {
+          throw new Error(`Message at index ${i} is too large for an empty batch`);
+        }
       }
 
       messageIds.push(id);

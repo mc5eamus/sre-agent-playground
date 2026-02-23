@@ -113,7 +113,7 @@ az aks get-credentials --resource-group rg-chaos-demo --name $AKS_NAME
 
 # Replace placeholders in K8s manifests and apply
 # (replace ${...} placeholders with actual values from deployment outputs)
-export ACR_NAME EVENT_HUB_NAMESPACE=$EH_NAMESPACE WEB_PUBSUB_HOSTNAME=$WPS_HOST WORKLOAD_IDENTITY_CLIENT_ID=$IDENTITY_CLIENT_ID
+export ACR_NAME=$ACR_NAME EVENT_HUB_NAMESPACE=$EH_NAMESPACE WEB_PUBSUB_HOSTNAME=$WPS_HOST WORKLOAD_IDENTITY_CLIENT_ID=$IDENTITY_CLIENT_ID
 
 envsubst < k8s/api.yaml | kubectl apply -f -
 envsubst < k8s/listener.yaml | kubectl apply -f -
