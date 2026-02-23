@@ -91,8 +91,6 @@ azd env get-values
 
 ### Option B: Deploy with Azure CLI
 
-### Option B: Deploy with Azure CLI
-
 ```bash
 # Login to Azure
 az login
