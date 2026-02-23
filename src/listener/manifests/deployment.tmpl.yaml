@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: listener-sa
+  annotations:
+    azure.workload.identity/client-id: "{{.Env.WORKLOAD_IDENTITY_CLIENT_ID}}"
+  labels:
+    azure.workload.identity/use: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: listener
+  labels:
+    app: listener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: listener
+  template:
+    metadata:
+      labels:
+        app: listener
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: listener-sa
+      containers:
+        - name: listener
+          image: {{.Env.SERVICE_LISTENER_IMAGE_NAME}}
+          env:
+            - name: EVENT_HUB_NAMESPACE
+              value: "{{.Env.EVENT_HUB_NAMESPACE}}"
+            - name: EVENT_HUB_NAME
+              value: "messages"
+            - name: CONSUMER_GROUP
+              value: "listener"
+            - name: WEB_PUBSUB_ENDPOINT
+              value: "https://{{.Env.WEB_PUBSUB_HOSTNAME}}"
+            - name: WEB_PUBSUB_HUB
+              value: "demo"
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "{{.Env.APPLICATIONINSIGHTS_CONNECTION_STRING}}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
